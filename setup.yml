@@ -1,0 +1,80 @@
+- name: Install GUI apps
+  hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  
+  - name: Enable flathub user-wide
+    command: flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo --user
+
+  - name: Install multiple Flatpak apps
+    community.general.flatpak:
+      name:
+        - org.signal.Signal
+        - com.github.hluk.copyq
+        - com.bitwarden
+        - org.gnome.Fractal
+        - com.belmoussaoui.Obfuscate
+        - org.gnome.gitlab.YaLTeR.VideoTrimmer
+        - com.github.gi_lom.dialect
+        - io.github.celluloid_player.Celluloid     
+      method: user
+      state: present
+      
+  - name: Remove multiple Flatpak apps
+    community.general.flatpak:
+      name:
+        - org.freedesktop.Piper
+      method: user
+      state: absent
+
+- name: Debloat
+  hosts: localhost
+  connection: local
+  become: true
+  tasks:
+     
+  - name: Remove some pre-installed Flatpak apps
+    community.general.flatpak:
+      name:
+        - org.fedoraproject.MediaWriter
+        - org.gnome.Contacts 
+        - org.gnome.FileRoller
+        - org.gnome.Logs
+        - org.gnome.Screenshot
+        - org.gnome.Maps
+        - org.gnome.clocks
+        - org.gnome.gedit
+        - org.gnome.baobab
+        - org.gnome.font-viewer
+      state: absent
+      remote: fedora
+
+- name: System management
+  hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  
+  - name: Pin unchanged OSTree deployment
+    command: ostree admin pin 0
+    
+  - name: Layer neovim
+    community.general.rpm_ostree_pkg:
+      name: neovim
+      state: present
+
+  - name: Layer tmux
+    community.general.rpm_ostree_pkg:
+      name: tmux
+      state: present
+
+  - name: Layer zsh
+    community.general.rpm_ostree_pkg:
+      name: zsh
+      state: present
+
+  - name: Layer yadm
+    community.general.rpm_ostree_pkg:
+      name: yadm
+      state: present
