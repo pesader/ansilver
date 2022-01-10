@@ -3,9 +3,13 @@
   connection: local
   become: false
   tasks:
-  
-  - name: Enable flathub user-wide
-    command: flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo --user
+
+  - name: Add the flathub flatpak repository remote to the user installation
+    community.general.flatpak_remote:
+      name: flathub
+      state: present
+      flatpakrepo_url: https://flathub.org/repo/flathub.flatpakrepo
+      method: user
 
   - name: Install multiple Flatpak apps
     community.general.flatpak:
@@ -13,18 +17,35 @@
         - org.signal.Signal
         - com.github.hluk.copyq
         - com.bitwarden
-        - org.gnome.Fractal
         - com.belmoussaoui.Obfuscate
         - org.gnome.gitlab.YaLTeR.VideoTrimmer
         - com.github.gi_lom.dialect
-        - io.github.celluloid_player.Celluloid     
+        - io.github.celluloid_player.Celluloid
+        - io.github.seadve.Kooha
+        - de.haeckerfelix.Fragments
+        - org.gnome.Extensions
+        - org.gnome.DejaDup
+        - ca.desrt.dconf-editor
+        - org.bluesabre.MenuLibre
+        - com.github.tchx84.Flatseal
+        - org.gnome.Fractal
+        - org.gnome.Boxes
+        - im.riot.Riot
+        - com.discordapp.Discord
+        - org.telegram.desktop
       method: user
       state: present
-      
-  - name: Remove multiple Flatpak apps
+
+  - name: Uninstall multiple Flatpak apps
     community.general.flatpak:
       name:
         - org.freedesktop.Piper
+        - org.gnome.Cheese
+        - com.obsproject.Studio
+        - com.uploadedlobster.peek
+        - org.chromium.Chromium
+        - org.mozilla.firefox
+        - io.github.mpobaschnig.Vaults
       method: user
       state: absent
 
@@ -33,12 +54,12 @@
   connection: local
   become: true
   tasks:
-     
-  - name: Remove some pre-installed Flatpak apps
+
+  - name: Remove pre-installed Flatpak apps
     community.general.flatpak:
       name:
         - org.fedoraproject.MediaWriter
-        - org.gnome.Contacts 
+        - org.gnome.Contacts
         - org.gnome.FileRoller
         - org.gnome.Logs
         - org.gnome.Screenshot
@@ -55,26 +76,49 @@
   connection: local
   become: true
   tasks:
-  
+
   - name: Pin unchanged OSTree deployment
     command: ostree admin pin 0
-    
-  - name: Layer neovim
+
+  - name: neovim
     community.general.rpm_ostree_pkg:
       name: neovim
-      state: present
+      state: absent
 
-  - name: Layer tmux
+  - name: tmux
     community.general.rpm_ostree_pkg:
       name: tmux
-      state: present
+      state: absent
 
-  - name: Layer zsh
+  - name: zsh
     community.general.rpm_ostree_pkg:
       name: zsh
-      state: present
+      state: absent
 
-  - name: Layer yadm
+  - name: cargo
     community.general.rpm_ostree_pkg:
-      name: yadm
-      state: present
+      name: cargo
+      state: absent
+
+  # dependency for Vaults flatpak
+  - name: gocryptfs
+    community.general.rpm_ostree_pkg:
+      name: gocryptfs
+      state: absent
+
+- name: Non-packaged software
+  hosts: localhost
+  become: false
+  tasks:
+
+  - name: Install starship prompt
+    shell: sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- --yes --bin-dir $HOME/.local/bin/
+
+  - name: Install yadm
+    shell: curl -fLo $HOME/.local/bin/yadm https://github.com/TheLocehiliosan/yadm/raw/master/yadm && chmod u+x $HOME/.local/bin/yadm
+
+  - name: Install papirus icons
+    shell: wget -qO- https://git.io/papirus-icon-theme-install | DESTDIR="$HOME/.local/share/icons" sh
+
+  - name: Install vim-plug
+    shell: sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
